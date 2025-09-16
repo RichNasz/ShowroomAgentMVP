@@ -6,6 +6,21 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		42219FD72E4295F60011E5DC /* CLAUDE.md in Resources */ = {isa = PBXBuildFile; fileRef = 42219FD62E4295EE0011E5DC /* CLAUDE.md */; };
+		428E01CA2E70DCF800B54AB7 /* SwiftChatCompletionsDSL in Frameworks */ = {isa = PBXBuildFile; productRef = 42B5DC2D2E70B7F600F3716E /* SwiftChatCompletionsDSL */; };
+		42B1AA612E788A3F00A424A3 /* ShowroomParser in Frameworks */ = {isa = PBXBuildFile; productRef = 42B1AA602E788A3F00A424A3 /* ShowroomParser */; };
+		42B1AA642E788A5F00A424A3 /* SwiftChatCompletionsDSL in Frameworks */ = {isa = PBXBuildFile; productRef = 42B1AA632E788A5F00A424A3 /* SwiftChatCompletionsDSL */; };
+		42B5DCDC2E70BF9600F3716E /* Yams in Frameworks */ = {isa = PBXBuildFile; productRef = 42B5DCDB2E70BF9600F3716E /* Yams */; };
+		49C9ABAAF06F42218BCA2CA0B92860DD /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = E92E43D69B774710935FF0D83741EAC1 /* README.md */; };
+		62F8A024B5104C6BA4BD219A9525C864 /* DISTRIBUTION_GUIDE.md in Resources */ = {isa = PBXBuildFile; fileRef = C5DDE51F357C4E6999233A6B19F184BC /* DISTRIBUTION_GUIDE.md */; };
+		6A71D55848FF4A4B84ED718F6C0D954C /* TEAM_INSTRUCTIONS.md in Resources */ = {isa = PBXBuildFile; fileRef = F55FD76B44514A0EB214E27F0061E2B3 /* TEAM_INSTRUCTIONS.md */; };
+		3F65EC5B55094D3EA321FA253CCDF33F /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 44894625A4334566A886CE7505A8A923 /* LICENSE */; };
+		A9E6DDFF74BF4601BC34C41AD33164DF /* NOTICE in Resources */ = {isa = PBXBuildFile; fileRef = 0A0BA42204FA469B812E9CE167948A78 /* NOTICE */; };
+		567D80B985BD48BF84EBA56DFF3B041C /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = B661EAE2DE024A5E93C9A78362FEAA14 /* .gitignore */; };
+		1F6707036C214D7A8E253B95FD2FDDEC /* build_for_distribution.sh in Resources */ = {isa = PBXBuildFile; fileRef = C4141814513C414C944ADBBFCBEAE368 /* build_for_distribution.sh */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		42219FBA2E426DF40011E5DC /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +42,14 @@
 		42219FAA2E426DF30011E5DC /* ShowroomAgentMVP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShowroomAgentMVP.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		42219FB92E426DF40011E5DC /* ShowroomAgentMVPTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShowroomAgentMVPTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		42219FC32E426DF40011E5DC /* ShowroomAgentMVPUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShowroomAgentMVPUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		42219FD62E4295EE0011E5DC /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
+		E92E43D69B774710935FF0D83741EAC1 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		C5DDE51F357C4E6999233A6B19F184BC /* DISTRIBUTION_GUIDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = DISTRIBUTION_GUIDE.md; sourceTree = "<group>"; };
+		F55FD76B44514A0EB214E27F0061E2B3 /* TEAM_INSTRUCTIONS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TEAM_INSTRUCTIONS.md; sourceTree = "<group>"; };
+		44894625A4334566A886CE7505A8A923 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		0A0BA42204FA469B812E9CE167948A78 /* NOTICE */ = {isa = PBXFileReference; lastKnownFileType = text; path = NOTICE; sourceTree = "<group>"; };
+		B661EAE2DE024A5E93C9A78362FEAA14 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		C4141814513C414C944ADBBFCBEAE368 /* build_for_distribution.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = build_for_distribution.sh; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -45,6 +68,11 @@
 			path = ShowroomAgentMVPUITests;
 			sourceTree = "<group>";
 		};
+		428E01E42E70DFCC00B54AB7 /* Specs */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Specs;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +80,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				42B1AA642E788A5F00A424A3 /* SwiftChatCompletionsDSL in Frameworks */,
+				428E01CA2E70DCF800B54AB7 /* SwiftChatCompletionsDSL in Frameworks */,
+				42B5DCDC2E70BF9600F3716E /* Yams in Frameworks */,
+				42B1AA612E788A3F00A424A3 /* ShowroomParser in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -75,6 +107,15 @@
 		42219FA12E426DF30011E5DC = {
 			isa = PBXGroup;
 			children = (
+				E92E43D69B774710935FF0D83741EAC1 /* README.md */,
+				42219FD62E4295EE0011E5DC /* CLAUDE.md */,
+				C5DDE51F357C4E6999233A6B19F184BC /* DISTRIBUTION_GUIDE.md */,
+				F55FD76B44514A0EB214E27F0061E2B3 /* TEAM_INSTRUCTIONS.md */,
+				44894625A4334566A886CE7505A8A923 /* LICENSE */,
+				0A0BA42204FA469B812E9CE167948A78 /* NOTICE */,
+				B661EAE2DE024A5E93C9A78362FEAA14 /* .gitignore */,
+				C4141814513C414C944ADBBFCBEAE368 /* build_for_distribution.sh */,
+				428E01E42E70DFCC00B54AB7 /* Specs */,
 				42219FAC2E426DF30011E5DC /* ShowroomAgentMVP */,
 				42219FBC2E426DF40011E5DC /* ShowroomAgentMVPTests */,
 				42219FC62E426DF40011E5DC /* ShowroomAgentMVPUITests */,
@@ -106,12 +147,18 @@
 			buildRules = (
 			);
 			dependencies = (
+				42B5DCDE2E70BFE300F3716E /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				42219FAC2E426DF30011E5DC /* ShowroomAgentMVP */,
+				428E01E42E70DFCC00B54AB7 /* Specs */,
 			);
 			name = ShowroomAgentMVP;
 			packageProductDependencies = (
+				42B5DC2D2E70B7F600F3716E /* SwiftChatCompletionsDSL */,
+				42B5DCDB2E70BF9600F3716E /* Yams */,
+				42B1AA602E788A3F00A424A3 /* ShowroomParser */,
+				42B1AA632E788A5F00A424A3 /* SwiftChatCompletionsDSL */,
 			);
 			productName = ShowroomAgentMVP;
 			productReference = 42219FAA2E426DF30011E5DC /* ShowroomAgentMVP.app */;
@@ -195,6 +242,11 @@
 			);
 			mainGroup = 42219FA12E426DF30011E5DC;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				42B5DCDA2E70BF9600F3716E /* XCRemoteSwiftPackageReference "Yams" */,
+				42B1AA5F2E788A3F00A424A3 /* XCRemoteSwiftPackageReference "ShowroomParser" */,
+				42B1AA622E788A5F00A424A3 /* XCRemoteSwiftPackageReference "SwiftChatCompletionsDSL" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 42219FAB2E426DF30011E5DC /* Products */;
 			projectDirPath = "";
@@ -212,6 +264,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				42219FD72E4295F60011E5DC /* CLAUDE.md in Resources */,
+				49C9ABAAF06F42218BCA2CA0B92860DD /* README.md in Resources */,
+				62F8A024B5104C6BA4BD219A9525C864 /* DISTRIBUTION_GUIDE.md in Resources */,
+				6A71D55848FF4A4B84ED718F6C0D954C /* TEAM_INSTRUCTIONS.md in Resources */,
+				3F65EC5B55094D3EA321FA253CCDF33F /* LICENSE in Resources */,
+				A9E6DDFF74BF4601BC34C41AD33164DF /* NOTICE in Resources */,
+				567D80B985BD48BF84EBA56DFF3B041C /* .gitignore in Resources */,
+				1F6707036C214D7A8E253B95FD2FDDEC /* build_for_distribution.sh in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -265,6 +325,10 @@
 			isa = PBXTargetDependency;
 			target = 42219FA92E426DF30011E5DC /* ShowroomAgentMVP */;
 			targetProxy = 42219FC42E426DF40011E5DC /* PBXContainerItemProxy */;
+		};
+		42B5DCDE2E70BFE300F3716E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 42B5DCDD2E70BFE300F3716E /* Yams */;
 		};
 /* End PBXTargetDependency section */
 
@@ -327,9 +391,11 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_SWIFT_FLAGS = "-enable-experimental-feature Macros -enable-experimental-feature StringProcessing";
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.1;
 			};
 			name = Debug;
 		};
@@ -384,8 +450,10 @@
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "-enable-experimental-feature Macros -enable-experimental-feature StringProcessing";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 6.1;
 			};
 			name = Release;
 		};
@@ -394,30 +462,47 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YWJU9P6KL8;
-				ENABLE_APP_SANDBOX = YES;
-				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx;
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.naszcyniec.ShowroomAgentMVP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.1;
 			};
 			name = Debug;
 		};
@@ -426,30 +511,48 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YWJU9P6KL8;
-				ENABLE_APP_SANDBOX = YES;
-				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx;
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "-enable-experimental-feature Macros -enable-experimental-feature StringProcessing";
 				PRODUCT_BUNDLE_IDENTIFIER = com.naszcyniec.ShowroomAgentMVP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.1;
 			};
 			name = Release;
 		};
@@ -461,6 +564,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YWJU9P6KL8;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.naszcyniec.ShowroomAgentMVPTests;
@@ -469,7 +574,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.1;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShowroomAgentMVP.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ShowroomAgentMVP";
 			};
 			name = Debug;
@@ -482,6 +587,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YWJU9P6KL8;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.naszcyniec.ShowroomAgentMVPTests;
@@ -490,7 +597,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.1;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShowroomAgentMVP.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ShowroomAgentMVP";
 			};
 			name = Release;
@@ -502,6 +609,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YWJU9P6KL8;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.naszcyniec.ShowroomAgentMVPUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -509,7 +618,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.1;
 				TEST_TARGET_NAME = ShowroomAgentMVP;
 			};
 			name = Debug;
@@ -521,6 +630,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YWJU9P6KL8;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.naszcyniec.ShowroomAgentMVPUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -528,7 +639,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.1;
 				TEST_TARGET_NAME = ShowroomAgentMVP;
 			};
 			name = Release;
@@ -573,6 +684,60 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		42B1AA5F2E788A3F00A424A3 /* XCRemoteSwiftPackageReference "ShowroomParser" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RichNasz/ShowroomParser.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		42B1AA622E788A5F00A424A3 /* XCRemoteSwiftPackageReference "SwiftChatCompletionsDSL" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RichNasz/SwiftChatCompletionsDSL.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		42B5DCDA2E70BF9600F3716E /* XCRemoteSwiftPackageReference "Yams" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/jpsim/Yams";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		42B1AA602E788A3F00A424A3 /* ShowroomParser */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 42B1AA5F2E788A3F00A424A3 /* XCRemoteSwiftPackageReference "ShowroomParser" */;
+			productName = ShowroomParser;
+		};
+		42B1AA632E788A5F00A424A3 /* SwiftChatCompletionsDSL */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 42B1AA622E788A5F00A424A3 /* XCRemoteSwiftPackageReference "SwiftChatCompletionsDSL" */;
+			productName = SwiftChatCompletionsDSL;
+		};
+		42B5DC2D2E70B7F600F3716E /* SwiftChatCompletionsDSL */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftChatCompletionsDSL;
+		};
+		42B5DCDB2E70BF9600F3716E /* Yams */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 42B5DCDA2E70BF9600F3716E /* XCRemoteSwiftPackageReference "Yams" */;
+			productName = Yams;
+		};
+		42B5DCDD2E70BFE300F3716E /* Yams */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 42B5DCDA2E70BF9600F3716E /* XCRemoteSwiftPackageReference "Yams" */;
+			productName = Yams;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 42219FA22E426DF30011E5DC /* Project object */;
 }

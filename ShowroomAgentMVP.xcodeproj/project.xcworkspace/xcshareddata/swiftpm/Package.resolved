@@ -1,0 +1,69 @@
+{
+  "originHash" : "36db8ee2171b8ac18fe4a0dcef4b4f1e2c556139d2f7c682168e6d965c53123c",
+  "pins" : [
+    {
+      "identity" : "showroomparser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/RichNasz/ShowroomParser.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "9a75f7b5ea872c6370c0e4413f71b789655e6faf"
+      }
+    },
+    {
+      "identity" : "swift-case-paths",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-case-paths",
+      "state" : {
+        "revision" : "9810c8d6c2914de251e072312f01d3bf80071852",
+        "version" : "1.7.1"
+      }
+    },
+    {
+      "identity" : "swift-parsing",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-parsing",
+      "state" : {
+        "branch" : "main",
+        "revision" : "611f34414280af332137e56433d90d1840656921"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-syntax",
+      "state" : {
+        "revision" : "f99ae8aa18f0cf0d53481901f88a0991dc3bd4a2",
+        "version" : "601.0.1"
+      }
+    },
+    {
+      "identity" : "swiftchatcompletionsdsl",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/RichNasz/SwiftChatCompletionsDSL.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "8ce90da714554b574843e9e875e2b327d5eb32b4"
+      }
+    },
+    {
+      "identity" : "xctest-dynamic-overlay",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/xctest-dynamic-overlay",
+      "state" : {
+        "revision" : "b2ed9eabefe56202ee4939dd9fc46b6241c88317",
+        "version" : "1.6.1"
+      }
+    },
+    {
+      "identity" : "yams",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/jpsim/Yams",
+      "state" : {
+        "revision" : "d41ba4e7164c0838c6d48351f7575f7f762151fe",
+        "version" : "6.1.0"
+      }
+    }
+  ],
+  "version" : 3
+}
