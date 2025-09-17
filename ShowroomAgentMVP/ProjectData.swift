@@ -21,6 +21,31 @@ import Foundation
 import SwiftData
 import ShowroomParser
 
+/// Content types that can be generated from repository documentation.
+///
+/// Represents the different types of marketing and communication content
+/// that can be automatically generated from technical documentation.
+///
+/// ## Usage
+/// ```swift
+/// let contentType = ContentType.blogPost
+/// project.setGeneratedFile(for: contentType, fileName: "api-guide.md")
+/// ```
+///
+/// ## Extensibility
+/// New content types can be added by simply adding new cases to this enum.
+/// The dictionary-based storage in Project automatically supports new types.
+enum ContentType: String, CaseIterable, Codable, Sendable {
+	/// Long-form blog posts and articles
+	case blogPost = "blog"
+
+	/// Email campaigns and newsletters
+	case email = "email"
+
+	/// LinkedIn posts and professional social media content
+	case linkedIn = "linkedin"
+}
+
 /// Repository cloning operation status tracking.
 ///
 /// Represents the current state of a repository download and extraction operation.
@@ -266,10 +291,40 @@ final class Project {
 	/// - Warning: **MUST** remain `@Transient` to prevent SwiftData corruption
 	/// - Note: Regenerated as needed; cleared automatically to manage memory usage
 	@Transient var showroomRepository: ShowroomRepository?
-	
 
-	
-	
+	/// Dictionary storing file names for generated content by content type.
+	///
+	/// Maps content types to their corresponding generated file names, providing
+	/// flexible storage for various types of marketing and communication content
+	/// generated from the repository documentation.
+	///
+	/// ## Usage
+	/// ```swift
+	/// // Set generated file names
+	/// project.setGeneratedFile(for: .blogPost, fileName: "api-guide-blog.md")
+	/// project.setGeneratedFile(for: .email, fileName: "release-email.html")
+	///
+	/// // Retrieve file names
+	/// if let blogFile = project.getGeneratedFile(for: .blogPost) {
+	///     // Process the blog file
+	/// }
+	///
+	/// // Clear specific content
+	/// project.clearGeneratedFile(for: .linkedIn)
+	/// ```
+	///
+	/// ## Design Benefits
+	/// - **Extensible**: New content types only require adding enum cases
+	/// - **Efficient**: O(1) dictionary lookup performance
+	/// - **Clean Storage**: Only stores actual file names (no nil values)
+	/// - **Type Safe**: ContentType enum prevents invalid keys
+	///
+	/// The dictionary uses ContentType.rawValue as keys for SwiftData compatibility.
+	/// Helper methods provide type-safe access while maintaining dictionary flexibility.
+	///
+	/// - Note: Updated automatically when modification date changes
+	var generatedContentFiles: [String: String] = [:]
+
 	/// Creates a new content generation project with the specified name.
 	///
 	/// Initializes a project with default configuration values and current timestamps.
@@ -556,5 +611,124 @@ final class Project {
 		}
 		
 		return try await block()
+	}
+
+	// MARK: - Generated Content File Management
+
+	/// Sets the file name for a specific content type.
+	///
+	/// Stores the generated file name in the dictionary using the content type as key.
+	/// Automatically updates the project's modification date to reflect the change.
+	///
+	/// ## Example
+	/// ```swift
+	/// project.setGeneratedFile(for: .blogPost, fileName: "api-guide-blog.md")
+	/// project.setGeneratedFile(for: .email, fileName: "release-announcement.html")
+	/// ```
+	///
+	/// - Parameters:
+	///   - contentType: The type of content being generated
+	///   - fileName: The name of the generated file (including extension)
+	///
+	/// - Postcondition: `modifiedDate` is updated to current time
+	func setGeneratedFile(for contentType: ContentType, fileName: String) {
+		generatedContentFiles[contentType.rawValue] = fileName
+		modifiedDate = Date()
+	}
+
+	/// Retrieves the file name for a specific content type.
+	///
+	/// Looks up the stored file name for the given content type in the dictionary.
+	/// Returns nil if no file has been generated for this content type.
+	///
+	/// ## Example
+	/// ```swift
+	/// if let blogFile = project.getGeneratedFile(for: .blogPost) {
+	///     // Process the blog file
+	///     print("Blog file: \(blogFile)")
+	/// } else {
+	///     print("No blog file generated yet")
+	/// }
+	/// ```
+	///
+	/// - Parameter contentType: The type of content to look up
+	/// - Returns: The file name if one exists, nil otherwise
+	func getGeneratedFile(for contentType: ContentType) -> String? {
+		return generatedContentFiles[contentType.rawValue]
+	}
+
+	/// Removes the file name for a specific content type.
+	///
+	/// Clears the stored file name for the given content type from the dictionary.
+	/// Automatically updates the project's modification date to reflect the change.
+	///
+	/// ## Example
+	/// ```swift
+	/// // Clear the LinkedIn content file
+	/// project.clearGeneratedFile(for: .linkedIn)
+	/// ```
+	///
+	/// - Parameter contentType: The type of content to clear
+	/// - Postcondition: `modifiedDate` is updated to current time
+	func clearGeneratedFile(for contentType: ContentType) {
+		generatedContentFiles.removeValue(forKey: contentType.rawValue)
+		modifiedDate = Date()
+	}
+
+	/// Removes all generated file names from the project.
+	///
+	/// Clears the entire dictionary of generated content files.
+	/// Useful for resetting the project or when regenerating all content.
+	/// Automatically updates the project's modification date to reflect the change.
+	///
+	/// ## Example
+	/// ```swift
+	/// // Clear all generated content before regenerating
+	/// project.clearAllGeneratedFiles()
+	/// ```
+	///
+	/// - Postcondition: `generatedContentFiles` is empty and `modifiedDate` is updated
+	func clearAllGeneratedFiles() {
+		generatedContentFiles.removeAll()
+		modifiedDate = Date()
+	}
+
+	/// Returns all content types that have generated files.
+	///
+	/// Provides a convenient way to check which content types have been generated
+	/// for this project. Useful for UI display and validation purposes.
+	///
+	/// ## Example
+	/// ```swift
+	/// let generatedTypes = project.getGeneratedContentTypes()
+	/// for contentType in generatedTypes {
+	///     print("Generated: \(contentType.rawValue)")
+	/// }
+	/// ```
+	///
+	/// - Returns: Array of ContentType values that have associated file names
+	func getGeneratedContentTypes() -> [ContentType] {
+		return generatedContentFiles.keys.compactMap { key in
+			ContentType(rawValue: key)
+		}
+	}
+
+	/// Checks if any content has been generated for this project.
+	///
+	/// Convenience property to quickly determine if the project has any generated files.
+	/// Useful for enabling/disabling UI elements or workflow decisions.
+	///
+	/// ## Example
+	/// ```swift
+	/// if project.hasGeneratedContent {
+	///     // Show export options
+	/// } else {
+	///     // Show generation prompts
+	/// }
+	/// ```
+	///
+	/// - Returns: `true` if any generated files exist, `false` otherwise
+	var hasGeneratedContent: Bool {
+		return !generatedContentFiles.isEmpty
 	}
 }

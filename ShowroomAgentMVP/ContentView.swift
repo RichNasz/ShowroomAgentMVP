@@ -154,22 +154,19 @@ struct ContentView: View {
 					onShowBlogGoal: showBlogGoal,
 					inspectorState: inspectorState
 				)
-				.navigationSplitViewColumnWidth(min: 600, ideal: 800, max: .infinity)
 			} else {
 				ContentUnavailableView(
 					"Select a Project",
 					systemImage: "folder.badge.plus",
 					description: Text("Choose a project from the sidebar to view its details and manage content generation.")
 				)
-				.frame(maxWidth: .infinity, maxHeight: .infinity)
-				.navigationSplitViewColumnWidth(min: 600, ideal: 600, max: .infinity)
 			}
 		}
 		.inspector(isPresented: $inspectorState.isVisible) {
 			UnifiedInspector(onCreateProject: createProject)
-				.inspectorColumnWidth(min: 300, ideal: 400, max: 500) // aways place on view that appears in inspector space
+				.inspectorColumnWidth(min: 300, ideal: 400, max: 500)
 		}
-		.frame(minWidth: 900, idealWidth: 900, maxWidth: .infinity, minHeight: 500)
+		.frame(minWidth: 900, minHeight: 500)
 		.environment(inspectorState)
 		.onAppear {
 			// createSampleProjectsIfNeeded() - PERMANENTLY DISABLED
@@ -377,111 +374,105 @@ struct ProjectSetupInspector: View {
 	}
 	
 	var body: some View {
-		VStack(spacing: 0) {
-			// Header
-			VStack(spacing: 8) {
-				Text(mode.title)
-					.font(.title3)
-					.fontWeight(.semibold)
+		ScrollView {
+			VStack(spacing: 20) {
+				// Header
+				VStack(spacing: 8) {
+					Text(mode.title)
+						.font(.title3)
+						.fontWeight(.semibold)
 
-				Text(mode.subtitle)
-					.font(.caption)
-					.foregroundStyle(.secondary)
-					.multilineTextAlignment(.center)
-			}
-			.padding(.top, 16)
-			.padding(.horizontal, 16)
-			.padding(.bottom, 12)
-
-			// Form content with ScrollView for better macOS inspector resizing
-			ScrollView {
-				Form {
-				if case .create = mode {
-					Section {
-						TextField("Project Name", text: $projectName, prompt: Text("My Project"))
-							.focused($isProjectNameFocused)
-							.submitLabel(.next)
-							.onSubmit {
-								// Move focus to next field or validate
-								if !projectName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-									// Focus handling for next field would go here
-								}
-							}
-					} header: {
-						Label("Project Information", systemImage: "folder.badge.plus")
-							.font(.subheadline)
-							.fontWeight(.medium)
-					} footer: {
-						Text("Enter a descriptive name that will help you identify this project.")
-							.font(.caption2)
-					}
+					Text(mode.subtitle)
+						.font(.caption)
+						.foregroundStyle(.secondary)
+						.multilineTextAlignment(.center)
 				}
-				
-				Section {
-					VStack(alignment: .leading, spacing: 12) {
-						TextField("Repository URL", text: $repositoryURL, prompt: Text("https://github.com/username/repository"))
-							.textContentType(.URL)
-							.autocorrectionDisabled()
-							.submitLabel(.done)
-						
-						VStack(alignment: .leading, spacing: 8) {
-							Text("Local Folder")
-								.font(.caption)
-								.fontWeight(.medium)
-							
-							HStack {
-								TextField("Choose a folder...", text: $localFolderPath)
-									.disabled(true)
-									.foregroundStyle(localFolderPath.isEmpty ? .tertiary : .primary)
-								
-								Button("Browse") {
-									selectLocalFolder()
-								}
-								.buttonStyle(.bordered)
-								.controlSize(.mini)
-							}
-							
-							if !localFolderPath.isEmpty {
-								Text(localFolderPath)
+				.padding(.top, 8)
+
+				// Form sections
+				VStack(spacing: 16) {
+					if case .create = mode {
+						GroupBox {
+							VStack(alignment: .leading, spacing: 12) {
+								Label("Project Information", systemImage: "folder.badge.plus")
+									.font(.subheadline)
+									.fontWeight(.medium)
+
+								TextField("Project Name", text: $projectName, prompt: Text("My Project"))
+									.focused($isProjectNameFocused)
+									.textFieldStyle(.roundedBorder)
+
+								Text("Enter a descriptive name that will help you identify this project.")
 									.font(.caption2)
 									.foregroundStyle(.secondary)
-									.lineLimit(2)
 							}
+							.padding()
 						}
 					}
-				} header: {
-					Label("Source Repository", systemImage: "link")
-						.font(.subheadline)
-						.fontWeight(.medium)
-				} footer: {
-					Text("The GitHub repository containing your documentation and the folder where files will be stored. Both can be configured later.")
-						.font(.caption2)
-				}
-			}
-			.formStyle(.grouped)
-			}
-			.padding(.bottom, 16)
-			// Close ScrollView here
 
-			// Bottom buttons
-			VStack(spacing: 8) {
-				Button(mode.primaryButtonTitle) {
-					handlePrimaryAction()
+					GroupBox {
+						VStack(alignment: .leading, spacing: 12) {
+							Label("Source Repository", systemImage: "link")
+								.font(.subheadline)
+								.fontWeight(.medium)
+
+							TextField("Repository URL", text: $repositoryURL, prompt: Text("https://github.com/username/repository"))
+								.textContentType(.URL)
+								.autocorrectionDisabled()
+								.textFieldStyle(.roundedBorder)
+
+							VStack(alignment: .leading, spacing: 8) {
+								Text("Local Folder")
+									.font(.caption)
+									.fontWeight(.medium)
+
+								HStack {
+									TextField("Choose a folder...", text: $localFolderPath)
+										.disabled(true)
+										.foregroundStyle(localFolderPath.isEmpty ? .tertiary : .primary)
+										.textFieldStyle(.roundedBorder)
+
+									Button("Browse") {
+										selectLocalFolder()
+									}
+									.buttonStyle(.bordered)
+									.controlSize(.small)
+								}
+
+								if !localFolderPath.isEmpty {
+									Text(localFolderPath)
+										.font(.caption2)
+										.foregroundStyle(.secondary)
+										.lineLimit(2)
+								}
+							}
+
+							Text("The GitHub repository containing your documentation and the folder where files will be stored. Both can be configured later.")
+								.font(.caption2)
+								.foregroundStyle(.secondary)
+						}
+						.padding()
+					}
 				}
-				.buttonStyle(.borderedProminent)
-				.disabled(isPrimaryButtonDisabled)
-				.keyboardShortcut(.defaultAction)
-				.frame(maxWidth: .infinity)
-				
-				Button("Cancel") {
-					onDismiss()
+
+				// Bottom buttons
+				VStack(spacing: 8) {
+					Button(mode.primaryButtonTitle) {
+						handlePrimaryAction()
+					}
+					.buttonStyle(.borderedProminent)
+					.disabled(isPrimaryButtonDisabled)
+					.keyboardShortcut(.defaultAction)
+
+					Button("Cancel") {
+						onDismiss()
+					}
+					.buttonStyle(.bordered)
+					.keyboardShortcut(.cancelAction)
 				}
-				.buttonStyle(.bordered)
-				.keyboardShortcut(.cancelAction)
-				.frame(maxWidth: .infinity)
+				.padding(.bottom, 20)
 			}
-			.padding(.horizontal, 16)
-			.padding(.vertical, 12)
+			.padding(.horizontal, 20)
 		}
 		.onAppear {
 			// Focus on project name field when inspector appears for new projects
@@ -567,23 +558,23 @@ struct ProjectDetailView: View {
 	@State private var cloneErrorMessage = ""
 	
 	var body: some View {
-		VStack(spacing: 24) {
-			projectHeaderView
+		ScrollView {
+			VStack(spacing: 24) {
+				projectHeaderView
 
-			repositoryConfigurationCard
+				repositoryConfigurationCard
 
-			horizontalCardScrollView
+				horizontalCardScrollView
 
-			Spacer(minLength: 40)
-
-			ContentUnavailableView(
-				"Additional Features Coming Soon",
-				systemImage: "wand.and.stars",
-				description: Text("Project configuration and content generation features will be added here.")
-			)
+				ContentUnavailableView(
+					"Additional Features Coming Soon",
+					systemImage: "wand.and.stars",
+					description: Text("Project configuration and content generation features will be added here.")
+				)
+				.padding(.top, 40)
+			}
+			.padding()
 		}
-		.padding()
-		.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 		.navigationTitle(project.name)
 		.toolbar {
 			ToolbarItem(placement: .primaryAction) {
@@ -719,7 +710,7 @@ struct ProjectDetailView: View {
 				.font(.headline)
 				.foregroundStyle(.primary)
 				.padding(.horizontal, 16)
-			
+
 			ScrollView(.horizontal, showsIndicators: false) {
 				HStack(spacing: 16) {
 					ForEach(ActivityType.allCases, id: \.self) { activity in
@@ -740,7 +731,6 @@ struct ProjectDetailView: View {
 				}
 				.padding(.horizontal, 16)
 			}
-			.frame(maxWidth: .infinity)
 		}
 	}
 	
@@ -861,7 +851,6 @@ struct ProjectDetailView: View {
 					}
 				}
 			}
-			.frame(maxWidth: .infinity, alignment: .leading)
 		}
 	}
 }
@@ -881,19 +870,19 @@ struct CardView: View {
 					Image(systemName: systemImage)
 						.font(.title2)
 						.foregroundStyle(color)
-					
+
 					Spacer()
-					
+
 					Image(systemName: "chevron.right")
 						.font(.caption)
 						.foregroundStyle(.secondary)
 				}
-				
+
 				VStack(alignment: .leading, spacing: 4) {
 					Text(title)
 						.font(.headline)
 						.foregroundStyle(.primary)
-					
+
 					Text(subtitle)
 						.font(.caption)
 						.foregroundStyle(.secondary)
@@ -901,7 +890,7 @@ struct CardView: View {
 				}
 			}
 			.padding(16)
-			.frame(minWidth: 140, idealWidth: 160, maxWidth: 200, minHeight: 100, idealHeight: 120)
+			.frame(width: 160, height: 120)
 			.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
 			.overlay(
 				RoundedRectangle(cornerRadius: 12)
@@ -909,7 +898,6 @@ struct CardView: View {
 			)
 		}
 		.buttonStyle(.plain)
-		.contentShape(RoundedRectangle(cornerRadius: 12))
 	}
 }
 
@@ -959,11 +947,11 @@ struct ActivityInspector: View {
 								.font(.subheadline)
 								.fontWeight(.medium)
 								.foregroundStyle(.primary)
-							
+
 							Text("Using content from: \(project.name)")
 								.font(.caption)
 								.foregroundStyle(.secondary)
-							
+
 							if let repoURL = project.repositoryURL {
 								Text("Repository: \(repoURL)")
 									.font(.caption2)
@@ -972,7 +960,7 @@ struct ActivityInspector: View {
 							}
 						}
 					}
-					
+
 					// Generation status
 					if isGenerating {
 						GroupBox {
@@ -981,31 +969,31 @@ struct ActivityInspector: View {
 									.font(.subheadline)
 									.fontWeight(.medium)
 									.foregroundStyle(.blue)
-								
+
 								ProgressView(value: generationProgress)
 									.progressViewStyle(.linear)
-								
+
 								Text("Analyzing repository content and generating \(activity.rawValue.lowercased())...")
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
 						}
 					}
-					
+
 					// Options and settings
 					GroupBox {
 						VStack(alignment: .leading, spacing: 12) {
 							Label("Generation Options", systemImage: "slider.horizontal.3")
 								.font(.subheadline)
 								.fontWeight(.medium)
-							
+
 							VStack(alignment: .leading, spacing: 8) {
 								Toggle("Include code examples", isOn: .constant(true))
 									.font(.caption)
-								
+
 								Toggle("Add technical diagrams", isOn: .constant(false))
 									.font(.caption)
-								
+
 								Toggle("Generate multiple variants", isOn: .constant(true))
 									.font(.caption)
 							}
@@ -1014,7 +1002,6 @@ struct ActivityInspector: View {
 				}
 				.padding(.horizontal, 16)
 			}
-			.frame(maxWidth: .infinity)
 			
 			// Action buttons
 			VStack(spacing: 8) {
@@ -1034,18 +1021,17 @@ struct ActivityInspector: View {
 				.buttonStyle(.borderedProminent)
 				.disabled(isGenerating || project.cloneStatus != .completed)
 				.frame(maxWidth: .infinity)
-				
+
 				Button("Close") {
 					dismiss()
 				}
 				.buttonStyle(.bordered)
 				.frame(maxWidth: .infinity)
 			}
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-            }
-            .frame(maxWidth: .infinity)
-    }
+			.padding(.horizontal, 16)
+			.padding(.vertical, 12)
+		}
+	}
 }
 
 // MARK: - Unified Inspector
@@ -1060,52 +1046,46 @@ struct UnifiedInspector: View {
 	}
 
 	var body: some View {
-		VStack(spacing: 0) {
-			switch inspectorState.currentType {
-			case .newProject:
-				ProjectSetupInspector(
-					mode: .create,
-					onComplete: { projectName, repositoryURL, localFolderPath, bookmark in
-						onCreateProject?(projectName, repositoryURL, localFolderPath, bookmark)
-						inspectorState.hide()
-					},
-					onDismiss: {
-						inspectorState.hide()
-					}
-				)
-				.frame(maxWidth: .infinity, maxHeight: .infinity)
+		switch inspectorState.currentType {
+		case .newProject:
+			ProjectSetupInspector(
+				mode: .create,
+				onComplete: { projectName, repositoryURL, localFolderPath, bookmark in
+					onCreateProject?(projectName, repositoryURL, localFolderPath, bookmark)
+					inspectorState.hide()
+				},
+				onDismiss: {
+					inspectorState.hide()
+				}
+			)
 
-			case .configureProject(let project):
-				ProjectSetupInspector(
-					mode: .configure(project),
-					onComplete: { _, repositoryURL, localFolderPath, bookmark in
-						project.updateRepositorySettings(repositoryURL: repositoryURL, localFolderPath: localFolderPath, localFolderBookmark: bookmark)
-						inspectorState.hide()
-					},
-					onDismiss: {
-						inspectorState.hide()
-					}
-				)
-				.frame(maxWidth: .infinity, maxHeight: .infinity)
+		case .configureProject(let project):
+			ProjectSetupInspector(
+				mode: .configure(project),
+				onComplete: { _, repositoryURL, localFolderPath, bookmark in
+					project.updateRepositorySettings(repositoryURL: repositoryURL, localFolderPath: localFolderPath, localFolderBookmark: bookmark)
+					inspectorState.hide()
+				},
+				onDismiss: {
+					inspectorState.hide()
+				}
+			)
 
-			case .blogGoal(let project):
-				BlogGoalInspector(
-					project: project,
-					onCleanupAndDismiss: {
-						inspectorState.hide()
-					}
-				)
-				.frame(maxWidth: .infinity, maxHeight: .infinity)
+		case .blogGoal(let project):
+			BlogGoalInspector(
+				project: project,
+				onCleanupAndDismiss: {
+					inspectorState.hide()
+				}
+			)
 
-			case .activity(let activity, let project):
-				ActivityInspector(activity: activity, project: project)
-				.frame(maxWidth: .infinity, maxHeight: .infinity)
+		case .activity(let activity, let project):
+			ActivityInspector(activity: activity, project: project)
 
-			case nil:
-				EmptyView()
-			}
+		case nil:
+			Text("Select an action")
+				.foregroundStyle(.secondary)
 		}
-		.frame(maxWidth: .infinity, maxHeight: .infinity)
 	}
 }
 

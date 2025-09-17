@@ -21,6 +21,7 @@ import Foundation
 import SwiftUI
 import SwiftData
 import SwiftChatCompletionsDSL
+import MarkdownUI
 
 // Removed Playgrounds import to fix dyld linking issues
 // #if canImport(Playgrounds)
@@ -63,16 +64,16 @@ enum BlogActivityType: String, CaseIterable {
 	/// - Returns: SF Symbol name appropriate for the activity type
 	var imageName: String {
 		switch self {
-		case .introduction:
-			return "hand.wave"
-		case .validateContent:
-			return "checkmark.shield"
-		case .providePrompt:
-			return "text.cursor"
-		case .generateContent:
-			return "sparkles"
-		case .reviewEdit:
-			return "pencil.and.outline"
+			case .introduction:
+				return "hand.wave"
+			case .validateContent:
+				return "checkmark.shield"
+			case .providePrompt:
+				return "text.cursor"
+			case .generateContent:
+				return "sparkles"
+			case .reviewEdit:
+				return "pencil.and.outline"
 		}
 	}
 }
@@ -96,10 +97,10 @@ enum BlogActivityType: String, CaseIterable {
 struct BlogActivityModel {
 	/// Unique identifier for tracking activity instances
 	let id = UUID()
-
+	
 	/// The type of blog activity this model represents
 	let type: BlogActivityType
-
+	
 	/// Completion status of this activity in the workflow
 	var isCompleted: Bool = false
 	
@@ -109,7 +110,7 @@ struct BlogActivityModel {
 	var title: String {
 		type.rawValue
 	}
-
+	
 	/// SF Symbol icon name for UI representation.
 	///
 	/// - Returns: The SF Symbol name associated with this activity type
@@ -148,7 +149,7 @@ struct BlogActivityModel {
 			case .generateContent:
 				return AnyView(GenerateContentView(project: project, onNext: onNext, onPrevious: onPrevious))
 			case .reviewEdit:
-				return AnyView(PlaceholderActivityView(title: title, onNext: onNext, onPrevious: onPrevious))
+				return AnyView(ReviewContentView(project: project, onNext: onNext, onPrevious: onPrevious))
 			default:
 				return AnyView(PlaceholderActivityView(title: title, onNext: onNext, onPrevious: onPrevious))
 		}
@@ -214,7 +215,7 @@ struct BlogGoalInspector: View {
 		VStack(spacing: 0) {
 			// Header with progress indicator
 			headerView
-
+			
 			// Current activity view
 			if currentActivityIndex < activities.count {
 				ScrollView {
@@ -226,7 +227,7 @@ struct BlogGoalInspector: View {
 					.padding(.horizontal)
 				}
 			}
-
+			
 			// Footer with close button
 			footerView
 		}
@@ -324,10 +325,19 @@ struct BlogGoalInspector: View {
 			onCleanupAndDismiss()
 			return
 		}
-		
-		activities[currentActivityIndex].isCompleted = true
+
+		let previousIndex = currentActivityIndex
+
+		// First, navigate to next activity
 		withAnimation(.easeInOut(duration: 0.3)) {
 			currentActivityIndex += 1
+		}
+
+		// Then mark previous activity as completed (after navigation)
+		DispatchQueue.main.async {
+			var updatedActivities = self.activities
+			updatedActivities[previousIndex].isCompleted = true
+			self.activities = updatedActivities
 		}
 	}
 	
@@ -387,6 +397,208 @@ struct WelcomeActivityView: View {
 			.controlSize(.large)
 		}
 		.padding()
+	}
+}
+
+/// View for reviewing generated blog content (read-only).
+///
+/// `ReviewContentView` provides a read-only interface for users to review
+/// generated blog content. The view loads content from the project's
+/// BlogPostContent.md file and displays it with markdown rendering.
+///
+/// ## Features
+/// - Load generated content from file system using security-scoped access
+/// - Markdown preview with GitHub styling
+/// - Error handling for file operations
+/// - Navigation controls for workflow progression
+///
+/// ## Usage
+/// Used in the blog creation workflow after content generation to allow users
+/// to review the AI-generated content before finalizing or proceeding to next steps.
+struct ReviewContentView: View {
+	let project: Project
+	let onNext: () -> Void
+	let onPrevious: () -> Void
+	
+	@State private var blogContent: String = ""
+	@State private var isLoading: Bool = true
+	@State private var loadError: String?
+	
+	private var hasContent: Bool {
+		!blogContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+	}
+	
+	var body: some View {
+		VStack(spacing: 0) {
+			// Header section
+			VStack(spacing: 16) {
+				Image(systemName: BlogActivityType.reviewEdit.imageName)
+					.font(.system(size: 40))
+					.foregroundStyle(.green)
+					.symbolRenderingMode(.hierarchical)
+				
+				VStack(spacing: 8) {
+					Text(BlogActivityType.reviewEdit.rawValue)
+						.font(.title2)
+						.fontWeight(.semibold)
+						.foregroundStyle(.primary)
+					
+					Text("Review your generated blog content. The content is displayed with markdown formatting for easy reading.")
+						.font(.subheadline)
+						.multilineTextAlignment(.center)
+						.foregroundStyle(.secondary)
+						.fixedSize(horizontal: false, vertical: true)
+				}
+			}
+			.padding(.bottom, 24)
+			
+			// Content area
+			if isLoading {
+				VStack(spacing: 16) {
+					ProgressView()
+						.controlSize(.large)
+					Text("Loading generated content...")
+						.foregroundStyle(.secondary)
+				}
+				.frame(maxWidth: .infinity, maxHeight: .infinity)
+			} else if let error = loadError {
+				VStack(spacing: 16) {
+					Image(systemName: "exclamationmark.triangle")
+						.font(.system(size: 48))
+						.foregroundStyle(.orange)
+					
+					Text("Error Loading Content")
+						.font(.headline)
+					
+					Text(error)
+						.multilineTextAlignment(.center)
+						.foregroundStyle(.secondary)
+					
+					Button("Retry") {
+						loadContent()
+					}
+					.buttonStyle(.bordered)
+				}
+				.frame(maxWidth: .infinity, maxHeight: .infinity)
+			} else {
+				VStack(spacing: 0) {
+					// Content toolbar
+					HStack {
+						Text("Generated Content")
+							.font(.subheadline)
+							.fontWeight(.medium)
+							.foregroundStyle(.secondary)
+						
+						Spacer()
+						
+						Button(action: copyToClipboard) {
+							HStack(spacing: 4) {
+								Image(systemName: "doc.on.clipboard")
+								Text("Copy")
+							}
+						}
+						.buttonStyle(.bordered)
+						.controlSize(.small)
+						.disabled(!hasContent)
+					}
+					.padding(.horizontal)
+					.padding(.bottom, 8)
+					
+					// Content preview (read-only)
+					ScrollView {
+						if hasContent {
+							Markdown(blogContent)
+								.markdownTheme(.gitHub)
+								.padding()
+						} else {
+							VStack(spacing: 12) {
+								Image(systemName: "doc.text")
+									.font(.system(size: 48))
+									.foregroundStyle(.secondary)
+								Text("No content to review")
+									.foregroundStyle(.secondary)
+							}
+							.frame(maxWidth: .infinity, maxHeight: .infinity)
+						}
+					}
+					.background(Color(.controlBackgroundColor))
+					.clipShape(RoundedRectangle(cornerRadius: 8))
+					.padding(.horizontal)
+				}
+			}
+			
+			Spacer()
+			
+			// Navigation buttons
+			HStack(spacing: 16) {
+				Button("Previous") {
+					onPrevious()
+				}
+				.buttonStyle(.bordered)
+				
+				Spacer()
+				
+				Button("Done") {
+					onNext()
+				}
+				.buttonStyle(.borderedProminent)
+				.disabled(!hasContent)
+			}
+			.padding(.horizontal)
+		}
+		.padding()
+		.onAppear {
+			loadContent()
+		}
+	}
+	
+	/// Copies the current blog content to the system clipboard.
+	///
+	/// Uses NSPasteboard to copy the markdown content to the system clipboard,
+	/// making it available for pasting into other applications.
+	private func copyToClipboard() {
+		let pasteboard = NSPasteboard.general
+		pasteboard.clearContents()
+		pasteboard.setString(blogContent, forType: .string)
+	}
+	
+	/// Loads the generated blog content from the project's file system.
+	///
+	/// Uses security-scoped access to read the BlogPostContent.md file from the
+	/// project's local folder. Updates the view state based on success or failure.
+	private func loadContent() {
+		isLoading = true
+		loadError = nil
+		
+		Task {
+			do {
+				let content = try await project.withSecureFolderAccess {
+					guard let localFolderPath = project.localFolderPath else {
+						throw NSError(domain: "ReviewContentError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Local folder path not configured"])
+					}
+					
+					let filePath = URL(fileURLWithPath: localFolderPath)
+						.appendingPathComponent("BlogPostContent.md")
+					
+					// Check if file exists
+					guard FileManager.default.fileExists(atPath: filePath.path) else {
+						throw NSError(domain: "ReviewContentError", code: 2, userInfo: [NSLocalizedDescriptionKey: "Blog content file not found. Generate content first."])
+					}
+					
+					return try String(contentsOf: filePath, encoding: .utf8)
+				}
+				
+				await MainActor.run {
+					blogContent = content
+					isLoading = false
+				}
+			} catch {
+				await MainActor.run {
+					loadError = error.localizedDescription
+					isLoading = false
+				}
+			}
+		}
 	}
 }
 
@@ -533,37 +745,37 @@ struct ValidateContentActivityView: View {
 	@ViewBuilder
 	private var statusContentView: some View {
 		switch validationState {
-		case .notStarted:
-			Text("Preparing to validate showroom source content...")
-				.multilineTextAlignment(.center)
-				.foregroundStyle(.secondary)
-			
-		case .running:
-			Text("Checking showroom structure and files...")
-				.multilineTextAlignment(.center)
-				.foregroundStyle(.secondary)
-			
-		case .success:
-			VStack(spacing: 8) {
-				Text("✅ Showroom content validation successful!")
-					.font(.headline)
-					.foregroundStyle(.green)
-				
-				Text("Your showroom contains valid content that can be used for blog generation.")
+			case .notStarted:
+				Text("Preparing to validate showroom source content...")
 					.multilineTextAlignment(.center)
 					.foregroundStyle(.secondary)
-			}
-			
-		case .failure(let errorMessage):
-			VStack(spacing: 8) {
-				Text("❌ Validation failed")
-					.font(.headline)
-					.foregroundStyle(.red)
 				
-				Text(errorMessage)
+			case .running:
+				Text("Checking showroom structure and files...")
 					.multilineTextAlignment(.center)
 					.foregroundStyle(.secondary)
-			}
+				
+			case .success:
+				VStack(spacing: 8) {
+					Text("✅ Showroom content validation successful!")
+						.font(.headline)
+						.foregroundStyle(.green)
+					
+					Text("Your showroom contains valid content that can be used for blog generation.")
+						.multilineTextAlignment(.center)
+						.foregroundStyle(.secondary)
+				}
+				
+			case .failure(let errorMessage):
+				VStack(spacing: 8) {
+					Text("❌ Validation failed")
+						.font(.headline)
+						.foregroundStyle(.red)
+					
+					Text(errorMessage)
+						.multilineTextAlignment(.center)
+						.foregroundStyle(.secondary)
+				}
 		}
 	}
 	
@@ -578,39 +790,39 @@ struct ValidateContentActivityView: View {
 			.buttonStyle(.bordered)
 			
 			switch validationState {
-			case .notStarted, .running:
-				// Cancel button during validation
-				Button("Cancel Validation") {
-					cancelValidation()
-				}
-				.buttonStyle(.bordered)
-				.foregroundStyle(.red)
-				
-			case .success:
-				// Continue button after successful validation
-				Button("Continue") {
-					onNext()
-				}
-				.buttonStyle(.borderedProminent)
-				
-			case .failure:
-				// Retry button after failure
-				Button("Retry Validation") {
-					startValidationProcess(project)
-				}
-				.buttonStyle(.borderedProminent)
-		}
+				case .notStarted, .running:
+					// Cancel button during validation
+					Button("Cancel Validation") {
+						cancelValidation()
+					}
+					.buttonStyle(.bordered)
+					.foregroundStyle(.red)
+					
+				case .success:
+					// Continue button after successful validation
+					Button("Continue") {
+						onNext()
+					}
+					.buttonStyle(.borderedProminent)
+					
+				case .failure:
+					// Retry button after failure
+					Button("Retry Validation") {
+						startValidationProcess(project)
+					}
+					.buttonStyle(.borderedProminent)
+			}
 		}
 	}
 	
 	private var iconColor: Color {
 		switch validationState {
-		case .notStarted, .running:
-			return .blue
-		case .success:
-			return .green
-		case .failure:
-			return .red
+			case .notStarted, .running:
+				return .blue
+			case .success:
+				return .green
+			case .failure:
+				return .red
 		}
 	}
 	
@@ -628,11 +840,11 @@ struct ValidateContentActivityView: View {
 	private func performValidation(_ project: Project) async {
 		// Simulate validation process with realistic timing
 		do {
-//			// validate that the cloned files path exists
-//			guard let localFolderPath = project.localFolderPath else {
-//				validationState = .failure("Local path for the showroom files is missing.")
-//				return
-//			}
+			//			// validate that the cloned files path exists
+			//			guard let localFolderPath = project.localFolderPath else {
+			//				validationState = .failure("Local path for the showroom files is missing.")
+			//				return
+			//			}
 			
 			// validate that the showroom file path exists
 			guard let showroomLocalPath = project.showroomLocalPath else {
@@ -647,10 +859,10 @@ struct ValidateContentActivityView: View {
 			if let bookmarkData = project.localFolderBookmark {
 				do {
 					var isStale = false
-					bookmarkURL = try URL(resolvingBookmarkData: bookmarkData, 
-										  options: .withSecurityScope, 
-										  relativeTo: nil, 
-										  bookmarkDataIsStale: &isStale)
+					bookmarkURL = try URL(resolvingBookmarkData: bookmarkData,
+												 options: .withSecurityScope,
+												 relativeTo: nil,
+												 bookmarkDataIsStale: &isStale)
 					if let url = bookmarkURL {
 						accessStarted = url.startAccessingSecurityScopedResource()
 					}
@@ -742,7 +954,7 @@ struct ValidateContentActivityView: View {
 					}
 					return
 				}
-
+				
 				// Store the parsed repository in the project for use in content generation
 				// Note: This is @Transient and will not be persisted to the data store
 				await MainActor.run {
@@ -875,7 +1087,7 @@ struct GatherPromptView: View {
 							.overlay(
 								RoundedRectangle(cornerRadius: 8)
 									.stroke(
-										hasChanges ? Color.accentColor : Color(NSColor.separatorColor), 
+										hasChanges ? Color.accentColor : Color(NSColor.separatorColor),
 										lineWidth: hasChanges ? 2 : 1
 									)
 							)
@@ -921,6 +1133,10 @@ struct GatherPromptView: View {
 				Spacer()
 				
 				Button("Continue") {
+					// Auto-save changes before continuing
+					if hasChanges {
+						savePrompt()
+					}
 					onNext()
 				}
 				.buttonStyle(.borderedProminent)
@@ -1000,8 +1216,8 @@ struct GenerateContentView: View {
 	
 	
 	private var hasChanges: Bool {
-		llmUrl != originalLlmUrl || 
-		llmModelName != originalLlmModelName || 
+		llmUrl != originalLlmUrl ||
+		llmModelName != originalLlmModelName ||
 		llmAPIKey != originalLlmAPIKey
 	}
 	
@@ -1038,25 +1254,51 @@ struct GenerateContentView: View {
 			/// This is the form used to collect information about the LLM connection
 			Form {
 				Section {
-					TextField("LLM URL", text: $llmUrl, prompt: Text("https://api.openai.com/v1/chat/completions"))
-						.textContentType(.URL)
-						.autocorrectionDisabled()
-						.textFieldStyle(.roundedBorder)
+					HStack {
+						TextField("LLM URL", text: $llmUrl, prompt: Text("https://api.openai.com/v1/chat/completions"))
+							.textContentType(.URL)
+							.autocorrectionDisabled()
+							.textFieldStyle(.roundedBorder)
+						
+						// Required field indicator
+						Image(systemName: llmUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "exclamationmark.circle" : "checkmark.circle.fill")
+							.foregroundColor(llmUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary : .green)
+							.font(.title3)
+					}
 				} header: {
-					Label("LLM Connection", systemImage: "link")
-						.font(.headline)
+					HStack {
+						Label("LLM Connection", systemImage: "link")
+							.font(.headline)
+						Text("(Required)")
+							.font(.caption)
+							.foregroundStyle(.orange)
+							.fontWeight(.medium)
+					}
 				} footer: {
 					Text("Enter the URL for your LLM's OpenAI-compatible Chat Completions endpoint.")
 						.font(.caption)
 				}
 				
 				Section {
-					TextField("Model Name", text: $llmModelName, prompt: Text("gpt-4"))
-						.autocorrectionDisabled()
-						.textFieldStyle(.roundedBorder)
+					HStack {
+						TextField("Model Name", text: $llmModelName, prompt: Text("gpt-4"))
+							.autocorrectionDisabled()
+							.textFieldStyle(.roundedBorder)
+						
+						// Required field indicator
+						Image(systemName: llmModelName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "exclamationmark.circle" : "checkmark.circle.fill")
+							.foregroundColor(llmModelName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary : .green)
+							.font(.title3)
+					}
 				} header: {
-					Label("Model Configuration", systemImage: "brain")
-						.font(.headline)
+					HStack {
+						Label("Model Configuration", systemImage: "brain")
+							.font(.headline)
+						Text("(Required)")
+							.font(.caption)
+							.foregroundStyle(.orange)
+							.fontWeight(.medium)
+					}
 				} footer: {
 					Text("Specify the model name to use for content generation.")
 						.font(.caption)
@@ -1066,19 +1308,25 @@ struct GenerateContentView: View {
 					SecureField("API Key", text: $llmAPIKey, prompt: Text("sk-..."))
 						.textFieldStyle(.roundedBorder)
 				} header: {
-					Label("Authentication", systemImage: "key.fill")
-						.font(.headline)
+					HStack {
+						Label("Authentication", systemImage: "key.fill")
+							.font(.headline)
+						Text("(Optional)")
+							.font(.caption)
+							.foregroundStyle(.secondary)
+							.fontWeight(.medium)
+					}
 				} footer: {
-					Text("Your API key will be stored securely and used for authentication.")
+					Text("Your API key will be stored securely and used for authentication. Some local models don't require an API key.")
 						.font(.caption)
 				}
-
+				
 				Section {
 					VStack(alignment: .leading, spacing: 8) {
 						Text("Temperature: \(String(format: "%.1f", project.temperature))")
 							.font(.subheadline)
 							.fontWeight(.medium)
-
+						
 						Slider(
 							value: Binding(
 								get: { project.temperature },
@@ -1088,7 +1336,7 @@ struct GenerateContentView: View {
 							step: 0.1
 						)
 						.tint(.blue)
-
+						
 						Text("Controls randomness in output. Lower values (0.2) = more focused and consistent. Higher values (1.8) = more creative and diverse.")
 							.font(.caption)
 							.foregroundStyle(.secondary)
@@ -1098,7 +1346,7 @@ struct GenerateContentView: View {
 					Label("Generation Settings", systemImage: "slider.horizontal.3")
 						.font(.headline)
 				}
-
+				
 				if hasChanges {
 					Section {
 						HStack(spacing: 12) {
@@ -1125,38 +1373,115 @@ struct GenerateContentView: View {
 			}
 			.formStyle(.grouped)
 			
-			// Generate button section (only shown when configuration is valid)
-			if canGenerate {
-				VStack(spacing: 12) {
-					Button(action: {
-						Task {
-							isGenerating = true
-							defer { isGenerating = false }
-							let result = try await generateBlogContent(project)
+			// Generate button section (progressive disclosure)
+			VStack(spacing: 16) {
+				if !canGenerate {
+					// Guidance section when requirements not met
+					VStack(spacing: 12) {
+						HStack {
+							Image(systemName: "info.circle.fill")
+								.foregroundStyle(.blue)
+								.font(.title3)
+							
+							VStack(alignment: .leading, spacing: 4) {
+								Text("Ready to Generate?")
+									.font(.headline)
+									.foregroundStyle(.primary)
+								
+								Text("Complete the required fields above to enable content generation.")
+									.font(.subheadline)
+									.foregroundStyle(.secondary)
+							}
+							
+							Spacer()
 						}
-					}) {
-						HStack(spacing: 8) {
-							Image(systemName: isGenerating ? "sparkles.rectangle.stack.fill" : "sparkles")
-								.symbolEffect(.bounce.down.wholeSymbol, isActive: isGenerating)
-							Text(isGenerating ? "Generating..." : "Generate")
+						
+						// Progress indicators
+						VStack(spacing: 8) {
+							HStack {
+								Image(systemName: llmUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "circle" : "checkmark.circle.fill")
+									.foregroundColor(llmUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary : .green)
+								Text("LLM URL configured")
+									.foregroundStyle(llmUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary : .primary)
+								Spacer()
+							}
+							
+							HStack {
+								Image(systemName: llmModelName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "circle" : "checkmark.circle.fill")
+									.foregroundColor(llmModelName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary : .green)
+								Text("Model name specified")
+									.foregroundStyle(llmModelName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary : .primary)
+								Spacer()
+							}
 						}
+						.font(.subheadline)
+						.padding(.leading, 8)
 					}
-					.buttonStyle(.borderedProminent)
-					.controlSize(.large)
-					.frame(maxWidth: .infinity)
-					.disabled(isGenerating)
+					.padding()
+					.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+				} else {
+					// Generate button appears when ready
+					VStack(spacing: 12) {
+						Button(action: {
+							Task {
+								isGenerating = true
+								defer { isGenerating = false }
+								
+								// Save LLM configuration to project before generating
+								saveLlmConfiguration()
+								
+								do {
+									if let result = try await generateBlogContent(project), !result.isEmpty {
+										// Write the generated content to file using security-scoped access
+										try await project.withSecureFolderAccess {
+											guard let localFolderPath = project.localFolderPath else {
+												throw NSError(domain: "BlogGoalError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Local folder path not configured"])
+											}
+											
+											let filePath = URL(fileURLWithPath: localFolderPath)
+												.appendingPathComponent("BlogPostContent.md")
+											
+											try result.write(to: filePath, atomically: true, encoding: .utf8)
+											
+											// Record the generated file in the project
+											project.setGeneratedFile(for: .blogPost, fileName: "BlogPostContent.md")
+										}
+									}
+								} catch {
+									// TODO: Add error handling UI feedback
+									print("Error generating or saving blog content: \(error.localizedDescription)")
+								}
+							}
+						}) {
+							HStack(spacing: 8) {
+								Image(systemName: isGenerating ? "sparkles.rectangle.stack.fill" : "sparkles")
+									.symbolEffect(.bounce.down.wholeSymbol, isActive: isGenerating)
+								Text(isGenerating ? "Generating..." : "Generate Content")
+							}
+						}
+						.buttonStyle(.borderedProminent)
+						.controlSize(.large)
+						.frame(maxWidth: .infinity)
+						.disabled(isGenerating)
+						
+						Text("✓ Configuration complete - ready to generate!")
+							.font(.caption)
+							.foregroundStyle(.green)
+							.fontWeight(.medium)
+					}
 				}
-				.padding(.horizontal, 16)
 			}
+			.padding(.horizontal, 16)
+			.animation(.easeInOut(duration: 0.3), value: canGenerate)
 			
 			Spacer()
 			
 			HStack(spacing: 16) {
-//				Button("Previous") {
-//					onPrevious()
-//				}
-//				.buttonStyle(.bordered)
-//				
+				//				Button("Previous") {
+				//					onPrevious()
+				//				}
+				//				.buttonStyle(.bordered)
+				//
 				Spacer()
 				
 				Button("Continue") {
@@ -1249,7 +1574,7 @@ struct GenerateContentView: View {
 		let request = try ChatRequest(model: modelName) {
 			// Configure optional parameters
 			try Temperature(project.temperature)
-//			try MaxTokens(150)
+			//			try MaxTokens(150)
 		} messages: {
 			// Build the conversation using result builders
 			TextMessage(role: .system, content: "You are a helpful assistant that excels at generating compelling technical blog articles.")
@@ -1263,8 +1588,8 @@ struct GenerateContentView: View {
 			
 			// Process the response
 			if let choice = response.choices.first {
-				print("Assistant: \(choice.message.content)")
-				print("Finish reason: \(choice.finishReason ?? "none")")
+				//				print("Assistant: \(choice.message.content)")
+				//				print("Finish reason: \(choice.finishReason ?? "none")")
 				return choice.message.content
 			}
 		} catch let error as LLMError {
@@ -1299,7 +1624,7 @@ struct GenerateContentView: View {
 //		baseURL: "http://localhost:8321/v1/openai/v1/chat/completions",
 //		apiKey: ""
 //	)
-//	
+//
 //	let request = try ChatRequest(model: "ollama/llama3.2:3b") {
 //		// Configure optional parameters
 //		try Temperature(0.7)
@@ -1309,22 +1634,22 @@ struct GenerateContentView: View {
 //		TextMessage(role: .system, content: "You are a helpful assistant.")
 //		TextMessage(role: .user, content: "Say hello.")
 //	}
-//	
+//
 //	// Send the request and get the complete response
 //	do {
 //		let response = try await client.complete(request)
-//		
+//
 //		// Process the response
 //		if let choice = response.choices.first {
 //			print("Assistant: \(choice.message.content)")
 //			print("Finish reason: \(choice.finishReason ?? "none")")
 //		}
-//		
+//
 //		// Show token usage if available
 //		if let usage = response.usage {
 //			print("Tokens used: \(usage.totalTokens) (prompt: \(usage.promptTokens), completion: \(usage.completionTokens))")
 //		}
-//		
+//
 //	} catch let error as LLMError {
 //		print("LLM Error: \(error)")
 //	} catch {
