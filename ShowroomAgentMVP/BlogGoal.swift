@@ -153,8 +153,6 @@ struct BlogActivityModel {
 				return AnyView(GenerateContentView(project: project))
 			case .reviewEdit:
 				return AnyView(ReviewContentView(project: project))
-			default:
-				return AnyView(PlaceholderActivityView(title: title))
 		}
 	}
 
@@ -244,6 +242,7 @@ struct BlogGoalInspector: View {
 				ScrollView {
 					activities[currentActivityIndex].createView(project: project, validationState: $validationState)
 						.padding(.horizontal)
+						.id("activity-\(currentActivityIndex)")
 				}
 			}
 
@@ -282,8 +281,10 @@ struct BlogGoalInspector: View {
 							Circle()
 								.stroke(index == currentActivityIndex ? Color.blue : Color.clear, lineWidth: 2)
 						)
+						.animation(.none, value: currentActivityIndex)
 				}
 			}
+			.animation(.easeInOut(duration: 0.2), value: currentActivityIndex)
 			
 			Text("Step \(currentActivityIndex + 1) of \(activities.count): \(activities[currentActivityIndex].title)")
 				.font(.caption)
@@ -362,16 +363,12 @@ struct BlogGoalInspector: View {
 
 		let previousIndex = currentActivityIndex
 
-		// First, navigate to next activity
+		// Update both state variables together in a single animation block
 		withAnimation(.easeInOut(duration: 0.3)) {
-			currentActivityIndex += 1
-		}
-
-		// Then mark previous activity as completed (after navigation)
-		DispatchQueue.main.async {
-			var updatedActivities = self.activities
+			var updatedActivities = activities
 			updatedActivities[previousIndex].isCompleted = true
-			self.activities = updatedActivities
+			activities = updatedActivities
+			currentActivityIndex += 1
 		}
 	}
 	
@@ -1396,7 +1393,11 @@ struct GenerateContentView: View, ActivityValidation {
 						Slider(
 							value: Binding(
 								get: { project.temperature },
-								set: { project.temperature = $0 }
+								set: { newValue in
+									withAnimation(.none) {
+										project.temperature = newValue
+									}
+								}
 							),
 							in: 0...2,
 							step: 0.1

@@ -26,11 +26,33 @@ struct ShowroomAgentMVPApp: App {
 		let schema = Schema([
 			Project.self,
 		])
-		let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-		
+
+		// Create a proper store URL in the app's container
+		guard let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+			fatalError("Unable to access Application Support directory")
+		}
+
+		// Create app-specific subdirectory using display name
+		let appName = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "ShowroomAgentMVP"
+		let appDataURL = appSupportURL.appendingPathComponent(appName)
+		let storeURL = appDataURL.appendingPathComponent("ShowroomAgent.sqlite")
+
+		// Ensure the app data directory exists
+		try? FileManager.default.createDirectory(at: appDataURL, withIntermediateDirectories: true, attributes: nil)
+
+		let modelConfiguration = ModelConfiguration(
+			"ShowroomAgent",
+			schema: schema,
+			url: storeURL
+		)
+
 		do {
 			return try ModelContainer(for: schema, configurations: [modelConfiguration])
 		} catch {
+			// More detailed error logging
+			print("Failed to create ModelContainer: \(error)")
+			print("Store URL: \(storeURL)")
+			print("App Support Directory: \(appSupportURL)")
 			fatalError("Could not create ModelContainer: \(error)")
 		}
 	}()

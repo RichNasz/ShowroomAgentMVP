@@ -48,7 +48,7 @@ cat > "$BUILD_DIR/ExportOptions.plist" << EOF
 <plist version="1.0">
 <dict>
     <key>method</key>
-    <string>none</string>
+    <string>mac-application</string>
     <key>signingStyle</key>
     <string>manual</string>
     <key>stripSwiftSymbols</key>

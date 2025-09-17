@@ -41,7 +41,7 @@
 
 /* Begin PBXFileReference section */
 		0A0BA42204FA469B812E9CE167948A78 /* NOTICE */ = {isa = PBXFileReference; lastKnownFileType = text; path = NOTICE; sourceTree = "<group>"; };
-		42219FAA2E426DF30011E5DC /* ShowroomAgentMVP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShowroomAgentMVP.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		42219FAA2E426DF30011E5DC /* Showroom Generator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Showroom Generator.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		42219FB92E426DF40011E5DC /* ShowroomAgentMVPTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShowroomAgentMVPTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		42219FC32E426DF40011E5DC /* ShowroomAgentMVPUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShowroomAgentMVPUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		42219FD62E4295EE0011E5DC /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
@@ -128,7 +128,7 @@
 		42219FAB2E426DF30011E5DC /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				42219FAA2E426DF30011E5DC /* ShowroomAgentMVP.app */,
+				42219FAA2E426DF30011E5DC /* Showroom Generator.app */,
 				42219FB92E426DF40011E5DC /* ShowroomAgentMVPTests.xctest */,
 				42219FC32E426DF40011E5DC /* ShowroomAgentMVPUITests.xctest */,
 			);
@@ -164,7 +164,7 @@
 				42FF4D782E7B2D9D006404CE /* MarkdownUI */,
 			);
 			productName = ShowroomAgentMVP;
-			productReference = 42219FAA2E426DF30011E5DC /* ShowroomAgentMVP.app */;
+			productReference = 42219FAA2E426DF30011E5DC /* Showroom Generator.app */;
 			productType = "com.apple.product-type.application";
 		};
 		42219FB82E426DF40011E5DC /* ShowroomAgentMVPTests */ = {
@@ -464,8 +464,9 @@
 		42219FCE2E426DF40011E5DC /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = ShowroomGenerator;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -486,6 +487,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Showroom Generator";
 				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
 				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -497,7 +499,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.naszcyniec.ShowroomAgentMVP;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "Showroom Generator";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = macosx;
@@ -513,8 +515,9 @@
 		42219FCF2E426DF40011E5DC /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = ShowroomGenerator;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -535,6 +538,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Showroom Generator";
 				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
 				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -547,7 +551,7 @@
 				MARKETING_VERSION = 1.0;
 				OTHER_SWIFT_FLAGS = "-enable-experimental-feature Macros -enable-experimental-feature StringProcessing";
 				PRODUCT_BUNDLE_IDENTIFIER = com.naszcyniec.ShowroomAgentMVP;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "Showroom Generator";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = macosx;
