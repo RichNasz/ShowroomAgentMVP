@@ -61,6 +61,49 @@ class InspectorState {
         isVisible = false
         currentType = nil
     }
+
+    /// Checks if the inspector is currently showing a workflow that conflicts with the requested type
+    func hasConflictingWorkflow(for requestedType: InspectorType) -> Bool {
+        guard isVisible, let current = currentType else { return false }
+
+        switch (current, requestedType) {
+        // Configuration conflicts with all workflows
+        case (.configureProject, .blogGoal), (.configureProject, .activity):
+            return true
+        case (.blogGoal, .configureProject), (.activity, .configureProject):
+            return true
+        // Blog workflow conflicts with configuration
+        case (.blogGoal, .blogGoal), (.activity, .activity):
+            // Same workflow type for same project is allowed (just switches content)
+            return false
+        default:
+            return false
+        }
+    }
+
+    /// Checks if configuration inspector can be shown
+    var canShowConfiguration: Bool {
+        guard isVisible, let current = currentType else { return true }
+
+        switch current {
+        case .blogGoal, .activity:
+            return false
+        default:
+            return true
+        }
+    }
+
+    /// Checks if workflow inspectors can be shown
+    var canShowWorkflow: Bool {
+        guard isVisible, let current = currentType else { return true }
+
+        switch current {
+        case .configureProject:
+            return false
+        default:
+            return true
+        }
+    }
 }
 
 /// Activity types for content generation cards
@@ -325,7 +368,12 @@ struct ProjectSetupInspector: View {
 	@State private var repositoryURL: String
 	@State private var localFolderPath: String
 	@FocusState private var isProjectNameFocused: Bool
-	
+
+	// Original values for change detection
+	private let originalProjectName: String
+	private let originalRepositoryURL: String
+	private let originalLocalFolderPath: String
+
 	let mode: SetupMode
 	let onComplete: (String, String?, String?, Data?) -> Void
 	let onDismiss: () -> Void
@@ -348,28 +396,39 @@ struct ProjectSetupInspector: View {
 			}
 		}
 		
-		var primaryButtonTitle: String {
-			switch self {
-			case .create: return "Create Project"
-			case .configure: return "Save Changes"
-			}
-		}
 	}
 	
 	init(mode: SetupMode, onComplete: @escaping (String, String?, String?, Data?) -> Void, onDismiss: @escaping () -> Void) {
 		self.mode = mode
 		self.onComplete = onComplete
 		self.onDismiss = onDismiss
-		
+
 		switch mode {
 		case .create:
-			self._projectName = State(initialValue: "")
-			self._repositoryURL = State(initialValue: "")
-			self._localFolderPath = State(initialValue: "")
+			let initialName = ""
+			let initialRepoURL = ""
+			let initialFolderPath = ""
+
+			self._projectName = State(initialValue: initialName)
+			self._repositoryURL = State(initialValue: initialRepoURL)
+			self._localFolderPath = State(initialValue: initialFolderPath)
+
+			self.originalProjectName = initialName
+			self.originalRepositoryURL = initialRepoURL
+			self.originalLocalFolderPath = initialFolderPath
+
 		case .configure(let project):
-			self._projectName = State(initialValue: project.name)
-			self._repositoryURL = State(initialValue: project.repositoryURL ?? "")
-			self._localFolderPath = State(initialValue: project.localFolderPath ?? "")
+			let initialName = project.name
+			let initialRepoURL = project.repositoryURL ?? ""
+			let initialFolderPath = project.localFolderPath ?? ""
+
+			self._projectName = State(initialValue: initialName)
+			self._repositoryURL = State(initialValue: initialRepoURL)
+			self._localFolderPath = State(initialValue: initialFolderPath)
+
+			self.originalProjectName = initialName
+			self.originalRepositoryURL = initialRepoURL
+			self.originalLocalFolderPath = initialFolderPath
 		}
 	}
 	
@@ -391,23 +450,22 @@ struct ProjectSetupInspector: View {
 
 				// Form sections
 				VStack(spacing: 16) {
-					if case .create = mode {
-						GroupBox {
-							VStack(alignment: .leading, spacing: 12) {
-								Label("Project Information", systemImage: "folder.badge.plus")
-									.font(.subheadline)
-									.fontWeight(.medium)
+					// Project Information - shown for both create and configure modes
+					GroupBox {
+						VStack(alignment: .leading, spacing: 12) {
+							Label("Project Information", systemImage: "folder.badge.plus")
+								.font(.subheadline)
+								.fontWeight(.medium)
 
-								TextField("Project Name", text: $projectName, prompt: Text("My Project"))
-									.focused($isProjectNameFocused)
-									.textFieldStyle(.roundedBorder)
+							TextField("Project Name", text: $projectName, prompt: Text("My Project"))
+								.focused($isProjectNameFocused)
+								.textFieldStyle(.roundedBorder)
 
-								Text("Enter a descriptive name that will help you identify this project.")
-									.font(.caption2)
-									.foregroundStyle(.secondary)
-							}
-							.padding()
+							Text("Enter a descriptive name that will help you identify this project.")
+								.font(.caption2)
+								.foregroundStyle(.secondary)
 						}
+						.padding()
 					}
 
 					GroupBox {
@@ -455,20 +513,22 @@ struct ProjectSetupInspector: View {
 					}
 				}
 
-				// Bottom buttons
-				VStack(spacing: 8) {
-					Button(mode.primaryButtonTitle) {
-						handlePrimaryAction()
-					}
-					.buttonStyle(.borderedProminent)
-					.disabled(isPrimaryButtonDisabled)
-					.keyboardShortcut(.defaultAction)
-
+				// Bottom buttons - Following Apple HIG: Cancel (left), Primary Action (right)
+				HStack(spacing: 12) {
 					Button("Cancel") {
 						onDismiss()
 					}
 					.buttonStyle(.bordered)
 					.keyboardShortcut(.cancelAction)
+
+					Spacer()
+
+					Button(dynamicPrimaryButtonTitle) {
+						handlePrimaryAction()
+					}
+					.buttonStyle(.borderedProminent)
+					.disabled(isPrimaryButtonDisabled)
+					.keyboardShortcut(.defaultAction)
 				}
 				.padding(.bottom, 20)
 			}
@@ -484,12 +544,29 @@ struct ProjectSetupInspector: View {
 		}
 	}
 	
+	/// Tracks whether any changes have been made to the form
+	private var hasChanges: Bool {
+		projectName != originalProjectName ||
+		repositoryURL != originalRepositoryURL ||
+		localFolderPath != originalLocalFolderPath
+	}
+
+	/// Dynamic button text based on changes and mode
+	private var dynamicPrimaryButtonTitle: String {
+		switch mode {
+		case .create:
+			return "Create Project"
+		case .configure:
+			return hasChanges ? "Save Changes" : "No Changes"
+		}
+	}
+
 	private var isPrimaryButtonDisabled: Bool {
 		switch mode {
 		case .create:
 			return projectName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
 		case .configure:
-			return false
+			return !hasChanges
 		}
 	}
 	
@@ -581,7 +658,8 @@ struct ProjectDetailView: View {
 				Button(action: { onConfigureProject(project) }) {
 					Label("Configure", systemImage: "gear")
 				}
-				.help("Configure project settings")
+				.help(inspectorState.canShowConfiguration ? "Configure project settings" : "Cannot configure while workflow is active")
+				.disabled(!inspectorState.canShowConfiguration)
 			}
 		}
 		.alert("Clone Error", isPresented: $showingCloneError) {
@@ -725,7 +803,8 @@ struct ProjectDetailView: View {
 								} else {
 									inspectorState.show(InspectorType.activity(activity, project))
 								}
-							}
+							},
+							isDisabled: !inspectorState.canShowWorkflow
 						)
 					}
 				}
@@ -862,7 +941,17 @@ struct CardView: View {
 	let systemImage: String
 	let color: Color
 	let action: () -> Void
-	
+	let isDisabled: Bool
+
+	init(title: String, subtitle: String, systemImage: String, color: Color, action: @escaping () -> Void, isDisabled: Bool = false) {
+		self.title = title
+		self.subtitle = subtitle
+		self.systemImage = systemImage
+		self.color = color
+		self.action = action
+		self.isDisabled = isDisabled
+	}
+
 	var body: some View {
 		Button(action: action) {
 			VStack(alignment: .leading, spacing: 12) {
@@ -870,22 +959,26 @@ struct CardView: View {
 					Image(systemName: systemImage)
 						.font(.title2)
 						.foregroundStyle(color)
+						.opacity(isDisabled ? 0.4 : 1.0)
 
 					Spacer()
 
 					Image(systemName: "chevron.right")
 						.font(.caption)
 						.foregroundStyle(.secondary)
+						.opacity(isDisabled ? 0.4 : 1.0)
 				}
 
 				VStack(alignment: .leading, spacing: 4) {
 					Text(title)
 						.font(.headline)
 						.foregroundStyle(.primary)
+						.opacity(isDisabled ? 0.4 : 1.0)
 
 					Text(subtitle)
 						.font(.caption)
 						.foregroundStyle(.secondary)
+						.opacity(isDisabled ? 0.4 : 1.0)
 						.lineLimit(2)
 				}
 			}
@@ -894,10 +987,12 @@ struct CardView: View {
 			.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
 			.overlay(
 				RoundedRectangle(cornerRadius: 12)
-					.stroke(Color.primary.opacity(0.1), lineWidth: 1)
+					.stroke(Color.primary, lineWidth: 1)
+					.opacity(isDisabled ? 0.05 : 0.1)
 			)
 		}
 		.buttonStyle(.plain)
+		.disabled(isDisabled)
 	}
 }
 
@@ -1062,7 +1157,10 @@ struct UnifiedInspector: View {
 		case .configureProject(let project):
 			ProjectSetupInspector(
 				mode: .configure(project),
-				onComplete: { _, repositoryURL, localFolderPath, bookmark in
+				onComplete: { projectName, repositoryURL, localFolderPath, bookmark in
+					// Update project name if it changed
+					project.name = projectName
+					// Update repository settings
 					project.updateRepositorySettings(repositoryURL: repositoryURL, localFolderPath: localFolderPath, localFolderBookmark: bookmark)
 					inspectorState.hide()
 				},

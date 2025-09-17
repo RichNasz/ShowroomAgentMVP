@@ -121,37 +121,59 @@ struct BlogActivityModel {
 	/// Creates the appropriate SwiftUI view for this activity type.
 	///
 	/// Factory method that instantiates the correct view based on the activity type.
-	/// Handles navigation callbacks and project context to provide a seamless
-	/// workflow experience.
+	/// Each view focuses solely on content and validation, with navigation handled
+	/// centrally by the BlogGoalInspector.
 	///
 	/// ## View Types
 	/// - **Introduction**: `WelcomeActivityView` with process overview
 	/// - **Validate Content**: `ValidateContentActivityView` with repository validation
 	/// - **Provide Prompt**: `GatherPromptView` for LLM prompt configuration
 	/// - **Generate Content**: `GenerateContentView` for content generation
-	/// - **Review/Edit**: `PlaceholderActivityView` (future implementation)
+	/// - **Review/Edit**: `ReviewContentView` for content review
 	///
 	/// - Parameters:
 	///   - project: The project context containing repository and configuration data
-	///   - onNext: Callback to advance to the next activity in the workflow
-	///   - onPrevious: Callback to return to the previous activity
 	/// - Returns: Type-erased SwiftUI view appropriate for this activity
 	///
 	/// - Important: Must be called on the main actor for UI safety
-	@MainActor func createView(project: Project, onNext: @escaping () -> Void, onPrevious: @escaping () -> Void) -> AnyView {
+	@MainActor func createView(project: Project, validationState: Binding<ValidationState>? = nil) -> AnyView {
 		switch type {
 			case .introduction:
-				return AnyView(WelcomeActivityView(onNext: onNext, onPrevious: onPrevious))
+				return AnyView(WelcomeActivityView())
 			case .validateContent:
-				return AnyView(ValidateContentActivityView(project: project, onNext: onNext, onPrevious: onPrevious))
+				if let validationBinding = validationState {
+					return AnyView(ValidateContentActivityView(project: project, externalValidationState: validationBinding))
+				} else {
+					// Fallback for when no binding is provided
+					return AnyView(ValidateContentActivityView(project: project, externalValidationState: .constant(.notStarted)))
+				}
 			case .providePrompt:
-				return AnyView(GatherPromptView(project: project, onNext: onNext, onPrevious: onPrevious))
+				return AnyView(GatherPromptView(project: project))
 			case .generateContent:
-				return AnyView(GenerateContentView(project: project, onNext: onNext, onPrevious: onPrevious))
+				return AnyView(GenerateContentView(project: project))
 			case .reviewEdit:
-				return AnyView(ReviewContentView(project: project, onNext: onNext, onPrevious: onPrevious))
+				return AnyView(ReviewContentView(project: project))
 			default:
-				return AnyView(PlaceholderActivityView(title: title, onNext: onNext, onPrevious: onPrevious))
+				return AnyView(PlaceholderActivityView(title: title))
+		}
+	}
+
+	/// Gets the validation interface for the current activity
+	@MainActor func getValidation(project: Project, validationState: ValidationState = .notStarted) -> ActivityValidation {
+		switch type {
+			case .introduction:
+				return WelcomeActivityView()
+			case .validateContent:
+				// For validation activity, use the actual validation state
+				return ValidateContentActivityValidation(validationState: validationState)
+			case .providePrompt:
+				return GatherPromptView(project: project)
+			case .generateContent:
+				return GenerateContentView(project: project)
+			case .reviewEdit:
+				return ReviewContentView(project: project)
+			default:
+				return PlaceholderActivityView(title: title)
 		}
 	}
 }
@@ -198,6 +220,7 @@ struct BlogActivityModel {
 struct BlogGoalInspector: View {
 	@State private var currentActivityIndex: Int = 0
 	@State private var activities: [BlogActivityModel]
+	@State private var validationState: ValidationState = .notStarted
 	let project: Project
 	let onCleanupAndDismiss: () -> Void
 	
@@ -215,21 +238,17 @@ struct BlogGoalInspector: View {
 		VStack(spacing: 0) {
 			// Header with progress indicator
 			headerView
-			
+
 			// Current activity view
 			if currentActivityIndex < activities.count {
 				ScrollView {
-					activities[currentActivityIndex].createView(
-						project: project,
-						onNext: moveToNextActivity,
-						onPrevious: moveToPreviousActivity
-					)
-					.padding(.horizontal)
+					activities[currentActivityIndex].createView(project: project, validationState: $validationState)
+						.padding(.horizontal)
 				}
 			}
-			
-			// Footer with close button
-			footerView
+
+			// Enhanced footer with context-aware navigation
+			enhancedFooterView
 		}
 		.frame(maxWidth: .infinity, maxHeight: .infinity)
 	}
@@ -276,32 +295,47 @@ struct BlogGoalInspector: View {
 		.padding(.top)
 	}
 	
-	/// Footer view providing workflow navigation and cancellation controls.
+	/// Enhanced footer view with context-aware navigation controls.
 	///
-	/// Displays navigation buttons for workflow control, including cancellation
-	/// and backward navigation when appropriate. Adapts button visibility
-	/// based on current workflow position.
+	/// Provides centralized navigation for the workflow using the activity validation
+	/// interface to determine button states and text. Follows Apple HIG for consistent
+	/// navigation patterns.
 	///
 	/// ## Navigation Controls
 	/// - Cancel button: Always visible for workflow termination
 	/// - Previous button: Visible when not on first step
-	/// - Layout adjusts automatically based on available controls
+	/// - Context-aware Continue/Next button: Text and state based on current activity
 	///
-	/// - Returns: SwiftUI view with footer navigation controls
-	private var footerView: some View {
-		HStack {
+	/// - Returns: SwiftUI view with enhanced navigation controls
+	private var enhancedFooterView: some View {
+		HStack(spacing: 16) {
 			Button("Cancel Process") {
 				onCleanupAndDismiss()
 			}
 			.buttonStyle(.bordered)
-			
+
 			Spacer()
-			
+
 			if currentActivityIndex > 0 {
 				Button("Previous") {
 					moveToPreviousActivity()
 				}
 				.buttonStyle(.bordered)
+			}
+
+			// Context-aware next button
+			if currentActivityIndex < activities.count {
+				let currentValidation = activities[currentActivityIndex].getValidation(project: project, validationState: validationState)
+
+				Button(currentValidation.nextButtonText) {
+					// Perform any pre-navigation actions (like saving)
+					if currentValidation.requiresPreNavigationAction {
+						currentValidation.performPreNavigationAction()
+					}
+					moveToNextActivity()
+				}
+				.buttonStyle(.borderedProminent)
+				.disabled(!currentValidation.canProceed)
 			}
 		}
 		.padding()
@@ -362,26 +396,73 @@ struct BlogGoalInspector: View {
 	}
 }
 
+// MARK: - Activity Validation Protocol
+
+/// Protocol for activity views to provide validation status for navigation control
+protocol ActivityValidation {
+	/// Indicates whether the current activity can proceed to the next step
+	var canProceed: Bool { get }
+
+	/// Provides context-specific button text for the inspector footer
+	var nextButtonText: String { get }
+
+	/// Indicates if the activity requires special handling (like auto-save)
+	var requiresPreNavigationAction: Bool { get }
+
+	/// Performs any necessary actions before navigation (like saving)
+	func performPreNavigationAction()
+}
+
+// MARK: - Activity Validation Helpers
+
+/// Validation wrapper for ValidateContentActivityView
+struct ValidateContentActivityValidation: ActivityValidation {
+	let validationState: ValidationState
+
+	var canProceed: Bool {
+		validationState == .success
+	}
+
+	var nextButtonText: String {
+		switch validationState {
+		case .notStarted:
+			return "Validating..."
+		case .running:
+			return "Validating..."
+		case .success:
+			return "Continue"
+		case .failure:
+			return "Fix Issues First"
+		}
+	}
+
+	var requiresPreNavigationAction: Bool { false }
+	func performPreNavigationAction() { }
+}
+
 // MARK: - Activity Views
 
-struct WelcomeActivityView: View {
-	let onNext: () -> Void
-	let onPrevious: () -> Void
-	
+struct WelcomeActivityView: View, ActivityValidation {
+
+	// MARK: - ActivityValidation
+	var canProceed: Bool { true }
+	var nextButtonText: String { "Start Process" }
+	var requiresPreNavigationAction: Bool { false }
+	func performPreNavigationAction() { }
 	var body: some View {
 		VStack(spacing: 20) {
 			Image(systemName: "flowchart")
 				.font(.system(size: 48))
 				.foregroundStyle(.blue)
-			
+
 			Text("Process Flow")
 				.font(.title3)
 				.fontWeight(.semibold)
-			
-			Text("This guided process flow will help you create engaging blog content from your showroom  documentation.")
+
+			Text("This guided process flow will help you create engaging blog content from your showroom documentation.")
 				.multilineTextAlignment(.center)
 				.foregroundStyle(.secondary)
-			
+
 			VStack(alignment: .leading, spacing: 8) {
 				ForEach(BlogActivityType.allCases.filter { $0 != .introduction }, id: \.self) { activityType in
 					Label(activityType.rawValue, systemImage: activityType.imageName)
@@ -389,12 +470,6 @@ struct WelcomeActivityView: View {
 			}
 			.font(.subheadline)
 			.foregroundStyle(.secondary)
-			
-			Button("Start Process") {
-				onNext()
-			}
-			.buttonStyle(.borderedProminent)
-			.controlSize(.large)
 		}
 		.padding()
 	}
@@ -415,11 +490,9 @@ struct WelcomeActivityView: View {
 /// ## Usage
 /// Used in the blog creation workflow after content generation to allow users
 /// to review the AI-generated content before finalizing or proceeding to next steps.
-struct ReviewContentView: View {
+struct ReviewContentView: View, ActivityValidation {
 	let project: Project
-	let onNext: () -> Void
-	let onPrevious: () -> Void
-	
+
 	@State private var blogContent: String = ""
 	@State private var isLoading: Bool = true
 	@State private var loadError: String?
@@ -427,6 +500,12 @@ struct ReviewContentView: View {
 	private var hasContent: Bool {
 		!blogContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
 	}
+
+	// MARK: - ActivityValidation
+	var canProceed: Bool { hasContent }
+	var nextButtonText: String { "Done" }
+	var requiresPreNavigationAction: Bool { false }
+	func performPreNavigationAction() { }
 	
 	var body: some View {
 		VStack(spacing: 0) {
@@ -526,25 +605,6 @@ struct ReviewContentView: View {
 					.padding(.horizontal)
 				}
 			}
-			
-			Spacer()
-			
-			// Navigation buttons
-			HStack(spacing: 16) {
-				Button("Previous") {
-					onPrevious()
-				}
-				.buttonStyle(.bordered)
-				
-				Spacer()
-				
-				Button("Done") {
-					onNext()
-				}
-				.buttonStyle(.borderedProminent)
-				.disabled(!hasContent)
-			}
-			.padding(.horizontal)
 		}
 		.padding()
 		.onAppear {
@@ -602,43 +662,33 @@ struct ReviewContentView: View {
 	}
 }
 
-struct PlaceholderActivityView: View {
+struct PlaceholderActivityView: View, ActivityValidation {
 	let title: String
-	let onNext: () -> Void
-	let onPrevious: () -> Void
-	
+
+	// MARK: - ActivityValidation
+	var canProceed: Bool { true }
+	var nextButtonText: String { "Continue" }
+	var requiresPreNavigationAction: Bool { false }
+	func performPreNavigationAction() { }
+
 	var body: some View {
 		VStack(spacing: 20) {
 			Image(systemName: "gear")
 				.font(.system(size: 48))
 				.foregroundStyle(.orange)
-			
+
 			Text(title)
 				.font(.title3)
 				.fontWeight(.semibold)
-			
+
 			Text("This activity will be implemented in a future update.")
 				.multilineTextAlignment(.center)
 				.foregroundStyle(.secondary)
-			
-			Text("For now, you can continue to the next step or go back to the previous one.")
+
+			Text("Navigation is handled by the inspector controls.")
 				.font(.caption)
 				.multilineTextAlignment(.center)
 				.foregroundStyle(.tertiary)
-			
-			HStack(spacing: 16) {
-				if title != "Welcome" {
-					Button("Previous") {
-						onPrevious()
-					}
-					.buttonStyle(.bordered)
-				}
-				
-				Button("Continue") {
-					onNext()
-				}
-				.buttonStyle(.borderedProminent)
-			}
 		}
 		.padding()
 	}
@@ -694,13 +744,36 @@ enum ValidationState: Equatable {
 ///
 /// - Important: Automatically starts validation process on view appearance
 /// - Note: Stores parsed repository in project's transient property for later use
-struct ValidateContentActivityView: View {
+struct ValidateContentActivityView: View, ActivityValidation {
 	let project: Project
-	let onNext: () -> Void
-	let onPrevious: () -> Void
-	
-	@State private var validationState: ValidationState = .notStarted
+	@Binding var externalValidationState: ValidationState
+
 	@State private var validationTask: Task<Void, Never>?
+
+	private var validationState: ValidationState {
+		externalValidationState
+	}
+
+	// MARK: - ActivityValidation
+	var canProceed: Bool {
+		validationState == .success
+	}
+
+	var nextButtonText: String {
+		switch validationState {
+		case .notStarted:
+			return "Validating..."
+		case .running:
+			return "Validating..."
+		case .success:
+			return "Continue"
+		case .failure:
+			return "Fix Issues First"
+		}
+	}
+
+	var requiresPreNavigationAction: Bool { false }
+	func performPreNavigationAction() { }
 	
 	var body: some View {
 		VStack(spacing: 24) {
@@ -782,13 +855,8 @@ struct ValidateContentActivityView: View {
 	@ViewBuilder
 	private var actionButtonsView: some View {
 		HStack(spacing: 16) {
-			// Previous button (always available)
-			Button("Previous") {
-				cancelValidation()
-				onPrevious()
-			}
-			.buttonStyle(.bordered)
-			
+			Spacer()
+
 			switch validationState {
 				case .notStarted, .running:
 					// Cancel button during validation
@@ -797,14 +865,11 @@ struct ValidateContentActivityView: View {
 					}
 					.buttonStyle(.bordered)
 					.foregroundStyle(.red)
-					
+
 				case .success:
-					// Continue button after successful validation
-					Button("Continue") {
-						onNext()
-					}
-					.buttonStyle(.borderedProminent)
-					
+					// No action needed - navigation handled by inspector
+					EmptyView()
+
 				case .failure:
 					// Retry button after failure
 					Button("Retry Validation") {
@@ -828,9 +893,9 @@ struct ValidateContentActivityView: View {
 	
 	private func startValidationProcess(_ project: Project) {
 		guard validationState != .running else { return }
-		
-		validationState = .running
-		
+
+		externalValidationState = .running
+
 		// Start the actual validation task
 		validationTask = Task {
 			await performValidation(project)
@@ -848,7 +913,9 @@ struct ValidateContentActivityView: View {
 			
 			// validate that the showroom file path exists
 			guard let showroomLocalPath = project.showroomLocalPath else {
-				validationState = .failure("Local path for the showroom files is missing.")
+				await MainActor.run {
+					externalValidationState = .failure("Local path for the showroom files is missing.")
+				}
 				return
 			}
 			
@@ -868,14 +935,14 @@ struct ValidateContentActivityView: View {
 					}
 				} catch {
 					await MainActor.run {
-						validationState = .failure("Failed to resolve security bookmark: \(error.localizedDescription)")
+						externalValidationState = .failure("Failed to resolve security bookmark: \(error.localizedDescription)")
 					}
 					return
 				}
 			} else {
 				// If no bookmark available, we may not have sandbox permissions
 				await MainActor.run {
-					validationState = .failure("No security bookmark available. Please reconfigure the project folder to grant access permissions.")
+					externalValidationState = .failure("No security bookmark available. Please reconfigure the project folder to grant access permissions.")
 				}
 				return
 			}
@@ -891,7 +958,7 @@ struct ValidateContentActivityView: View {
 				let bookmarkedPath = url.path
 				if !showroomLocalPath.hasPrefix(bookmarkedPath) {
 					await MainActor.run {
-						validationState = .failure("Showroom path '\(showroomLocalPath)' is not within the authorized directory '\(bookmarkedPath)'")
+						externalValidationState = .failure("Showroom path '\(showroomLocalPath)' is not within the authorized directory '\(bookmarkedPath)'")
 					}
 					return
 				}
@@ -900,7 +967,7 @@ struct ValidateContentActivityView: View {
 			// Validate that the showroom directory exists
 			guard FileManager.default.fileExists(atPath: showroomLocalPath) else {
 				await MainActor.run {
-					validationState = .failure("Showroom directory does not exist at path: \(showroomLocalPath)")
+					externalValidationState = .failure("Showroom directory does not exist at path: \(showroomLocalPath)")
 				}
 				return
 			}
@@ -910,7 +977,7 @@ struct ValidateContentActivityView: View {
 				let contents = try FileManager.default.contentsOfDirectory(atPath: showroomLocalPath)
 				guard !contents.isEmpty else {
 					await MainActor.run {
-						validationState = .failure("Showroom directory is empty: \(showroomLocalPath)")
+						externalValidationState = .failure("Showroom directory is empty: \(showroomLocalPath)")
 					}
 					return
 				}
@@ -927,13 +994,13 @@ struct ValidateContentActivityView: View {
 				
 				guard canReadFiles else {
 					await MainActor.run {
-						validationState = .failure("Cannot read files in showroom directory: \(showroomLocalPath)")
+						externalValidationState = .failure("Cannot read files in showroom directory: \(showroomLocalPath)")
 					}
 					return
 				}
 			} catch {
 				await MainActor.run {
-					validationState = .failure("Failed to access showroom directory: \(error.localizedDescription)")
+					externalValidationState = .failure("Failed to access showroom directory: \(error.localizedDescription)")
 				}
 				return
 			}
@@ -942,7 +1009,7 @@ struct ValidateContentActivityView: View {
 			do {
 				guard let repositoryPath = project.repositoryLocalPath else {
 					await MainActor.run {
-						validationState = .failure("Repository local path is not configured")
+						externalValidationState = .failure("Repository local path is not configured")
 					}
 					return
 				}
@@ -950,7 +1017,7 @@ struct ValidateContentActivityView: View {
 				// Parse the showroom repository using ShowroomParser
 				guard let showroomRepository = ShowroomParser.parseRepository(at: repositoryPath) else {
 					await MainActor.run {
-						validationState = .failure("Failed to parse showroom repository at path: \(repositoryPath)")
+						externalValidationState = .failure("Failed to parse showroom repository at path: \(repositoryPath)")
 					}
 					return
 				}
@@ -959,17 +1026,17 @@ struct ValidateContentActivityView: View {
 				// Note: This is @Transient and will not be persisted to the data store
 				await MainActor.run {
 					project.showroomRepository = showroomRepository
-					validationState = .success
+					externalValidationState = .success
 				}
 			} catch {
 				await MainActor.run {
-					validationState = .failure("Failed to parse showroom repository: \(error.localizedDescription)")
+					externalValidationState = .failure("Failed to parse showroom repository: \(error.localizedDescription)")
 				}
 				return
 			}
 		} catch {
 			await MainActor.run {
-				validationState = .failure("Validation was cancelled or interrupted.")
+				externalValidationState = .failure("Validation was cancelled or interrupted.")
 			}
 		}
 	}
@@ -977,9 +1044,9 @@ struct ValidateContentActivityView: View {
 	private func cancelValidation() {
 		validationTask?.cancel()
 		validationTask = nil
-		
+
 		if case .running = validationState {
-			validationState = .notStarted
+			externalValidationState = .notStarted
 		}
 	}
 }
@@ -1008,17 +1075,30 @@ struct ValidateContentActivityView: View {
 ///
 /// - Important: Changes are not automatically saved; users must explicitly save
 /// - Note: Supports multi-line prompts with rich text editing capabilities
-struct GatherPromptView: View {
-	
+struct GatherPromptView: View, ActivityValidation {
+
 	let project: Project
-	let onNext: () -> Void
-	let onPrevious: () -> Void
-	
+
 	@State private var promptText: String = ""
 	@State private var originalPromptText: String = ""
-	
+
 	private var hasChanges: Bool {
 		promptText != originalPromptText
+	}
+
+	// MARK: - ActivityValidation
+	var canProceed: Bool { true }
+
+	var nextButtonText: String {
+		hasChanges ? "Save & Continue" : "Continue"
+	}
+
+	var requiresPreNavigationAction: Bool { hasChanges }
+
+	func performPreNavigationAction() {
+		if hasChanges {
+			savePrompt()
+		}
 	}
 	
 	var body: some View {
@@ -1119,31 +1199,6 @@ struct GatherPromptView: View {
 				.padding(.horizontal, 24)
 				.padding(.top, 24)
 			}
-			
-			Spacer()
-			
-			// Navigation buttons
-			HStack(spacing: 12) {
-				Button("Previous") {
-					onPrevious()
-				}
-				.buttonStyle(.bordered)
-				.keyboardShortcut(.cancelAction)
-				
-				Spacer()
-				
-				Button("Continue") {
-					// Auto-save changes before continuing
-					if hasChanges {
-						savePrompt()
-					}
-					onNext()
-				}
-				.buttonStyle(.borderedProminent)
-				.keyboardShortcut(.defaultAction)
-			}
-			.padding(.horizontal, 24)
-			.padding(.bottom, 24)
 		}
 		.onAppear {
 			loadPromptFromProject()
@@ -1201,11 +1256,9 @@ struct GatherPromptView: View {
 ///
 /// - Important: Requires valid LLM configuration before content generation
 /// - Note: Supports various OpenAI-compatible LLM providers including local models
-struct GenerateContentView: View {
+struct GenerateContentView: View, ActivityValidation {
 	let project: Project
-	let onNext: () -> Void
-	let onPrevious: () -> Void
-	
+
 	@State private var llmUrl: String = ""
 	@State private var llmModelName: String = ""
 	@State private var llmAPIKey: String = ""
@@ -1224,6 +1277,19 @@ struct GenerateContentView: View {
 	private var canGenerate: Bool {
 		!llmUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
 		!llmModelName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+	}
+
+	// MARK: - ActivityValidation
+	var canProceed: Bool { true }
+
+	var nextButtonText: String { "Continue" }
+
+	var requiresPreNavigationAction: Bool { hasChanges }
+
+	func performPreNavigationAction() {
+		if hasChanges {
+			saveLlmConfiguration()
+		}
 	}
 	
 	var body: some View {
@@ -1474,21 +1540,6 @@ struct GenerateContentView: View {
 			.padding(.horizontal, 16)
 			.animation(.easeInOut(duration: 0.3), value: canGenerate)
 			
-			Spacer()
-			
-			HStack(spacing: 16) {
-				//				Button("Previous") {
-				//					onPrevious()
-				//				}
-				//				.buttonStyle(.bordered)
-				//
-				Spacer()
-				
-				Button("Continue") {
-					onNext()
-				}
-				.buttonStyle(.borderedProminent)
-			}
 		}
 		.padding()
 		.onAppear {
